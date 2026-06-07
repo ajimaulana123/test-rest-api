@@ -1,29 +1,24 @@
 {
-	"compatibility_date": "2025-10-08",
+	"compatibility_date": "2026-06-07",
 	"main": "src/index.ts",
 	"name": "test-rest-api",
 	"upload_source_maps": true,
 	"observability": {
 		"enabled": true
 	},
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "openapi-template-db",
-			"database_id": "797e165d-9565-4011-9e49-b8b648c96dc6"
-		}
-	],
-	// Add nodejs_compat compatibility flag to support common database drivers
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
-	// Add this to your wrangler.jsonc
+	"vars": {
+		"SUPABASE_URL": "https://yksxziekqrtiormlegdw.supabase.co",
+		"SUPABASE_ANON_KEY": "sb_publishable_SwLjQJJHhfm47DdnL0G1_g_qpyeNYnH"
+	},
 	"hyperdrive": [
 		{
 			"binding": "HYPERDRIVE",
 			"id": "68d8ba7941094046b3c61d661d416606",
-			// Optional. Can be used to connect to a local database for local development with `wrangler dev`
-			"localConnectionString": "postgresql://postgres.yksxziekqrtiormlegdw:Gsfl4U6MOUNSOsj0@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres"
+			// Used for local development with `wrangler dev`
+			"localConnectionString": "postgresql://postgres.yksxziekqrtiormlegdw:Gsfl4U6MOUNSOsj0@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres"
 		}
 	]
 }

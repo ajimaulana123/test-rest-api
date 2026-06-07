@@ -1,24 +1,54 @@
 import { ApiException, fromHono } from "chanfana";
+import { Client } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { Hono } from "hono";
-import { tasksRouter } from "./endpoints/tasks/router";
-import { ContentfulStatusCode } from "hono/utils/http-status";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
+import * as schema from "./db/schema";
 import { DummyEndpoint } from "./endpoints/dummyEndpoint";
+import { authRouter } from "./endpoints/auth/router";
+import { tasksRouter } from "./endpoints/tasks/router";
+import type { AppEnv } from "./types";
 
-// Start a Hono app
-const app = new Hono<{ Bindings: Env }>();
+const app = new Hono<AppEnv>();
+
+// DB middleware — create a new pg Client per request via Hyperdrive
+app.use("*", async (c, next) => {
+	const client = new Client({
+		connectionString: c.env.HYPERDRIVE.connectionString,
+		connectionTimeoutMillis: 5000,
+		query_timeout: 10000,
+	});
+
+	try {
+		await client.connect();
+	} catch (connectErr) {
+		console.error("DB connect failed:", connectErr);
+		return c.json(
+			{ success: false, errors: [{ code: 7001, message: "Database connection failed" }] },
+			500,
+		);
+	}
+
+	const db = drizzle(client, { schema });
+	c.set("db", db);
+
+	try {
+		await next();
+	} finally {
+		client.end().catch((e) => console.error("DB end error:", e));
+	}
+});
 
 app.onError((err, c) => {
 	if (err instanceof ApiException) {
-		// If it's a Chanfana ApiException, let Chanfana handle the response
 		return c.json(
 			{ success: false, errors: err.buildResponse() },
 			err.status as ContentfulStatusCode,
 		);
 	}
 
-	console.error("Global error handler caught:", err); // Log the error if it's not known
+	console.error("Global error handler caught:", err, JSON.stringify(err, Object.getOwnPropertyNames(err)));
 
-	// For other errors, return a generic 500 response
 	return c.json(
 		{
 			success: false,
@@ -28,7 +58,6 @@ app.onError((err, c) => {
 	);
 });
 
-// Setup OpenAPI registry
 const openapi = fromHono(app, {
 	docs_url: "/",
 	schema: {
@@ -40,11 +69,16 @@ const openapi = fromHono(app, {
 	},
 });
 
-// Register Tasks Sub router
-openapi.route("/tasks", tasksRouter);
+// Register Bearer auth scheme so Swagger UI shows the Authorize button
+openapi.registry.registerComponent("securitySchemes", "bearerAuth", {
+	type: "http",
+	scheme: "bearer",
+	bearerFormat: "JWT",
+	description: "JWT access_token dari POST /auth/login",
+});
 
-// Register other endpoints
+openapi.route("/auth", authRouter);
+openapi.route("/tasks", tasksRouter);
 openapi.post("/dummy/:slug", DummyEndpoint);
 
-// Export the Hono app
 export default app;

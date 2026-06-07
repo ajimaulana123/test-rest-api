@@ -1,13 +1,17 @@
-import { Hono } from "hono";
 import { fromHono } from "chanfana";
-import { TaskList } from "./taskList";
+import { Hono } from "hono";
+import type { AppEnv } from "../../types";
+import { authMiddleware } from "../../middleware/auth";
 import { TaskCreate } from "./taskCreate";
+import { TaskDelete } from "./taskDelete";
+import { TaskList } from "./taskList";
 import { TaskRead } from "./taskRead";
 import { TaskUpdate } from "./taskUpdate";
-import { TaskDelete } from "./taskDelete";
 
-export const tasksRouter = fromHono(new Hono());
+export const tasksRouter = fromHono(new Hono<AppEnv>());
 
+// All task routes require authentication
+tasksRouter.use("*", authMiddleware);
 tasksRouter.get("/", TaskList);
 tasksRouter.post("/", TaskCreate);
 tasksRouter.get("/:id", TaskRead);

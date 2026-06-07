@@ -16,15 +16,22 @@
 		"publish": true
 	},
 	"dependencies": {
+		"@supabase/supabase-js": "2.49.8",
 		"chanfana": "2.8.3",
+		"drizzle-orm": "0.44.2",
+		"drizzle-zod": "0.7.0",
 		"hono": "4.11.1",
+		"pg": "8.16.3",
+		"postgres": "3.4.5",
 		"zod": "3.25.67"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "0.11.1",
 		"@types/node": "24.10.1",
+		"@types/pg": "8.11.14",
 		"@vitest/runner": "3.2.4",
 		"@vitest/snapshot": "3.2.4",
+		"drizzle-kit": "0.31.1",
 		"typescript": "5.9.3",
 		"vitest": "3.2.4",
 		"wrangler": "4.88.0"
@@ -33,10 +40,11 @@
 	"scripts": {
 		"cf-typegen": "wrangler types",
 		"deploy": "wrangler deploy",
-		"dev": "pnpm seedLocalDb && wrangler dev",
-		"predeploy": "wrangler d1 migrations apply DB --remote",
+		"dev": "wrangler dev",
 		"schema": "npx chanfana",
-		"seedLocalDb": "wrangler d1 migrations apply DB --local",
+		"db:generate": "drizzle-kit generate",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio",
 		"test": "wrangler deploy --dry-run && npx vitest run --config tests/vitest.config.mts"
 	}
 }
